@@ -40,5 +40,9 @@ install(FILES
     clKernel2To1.h
     clSignalSource.h
     clCostasLoop.h
-    clComplexFilter.h DESTINATION include/clenabled
+    clComplexFilter.h
+    clPolyphaseChannelizer.h
+    clXCorrelate.h
+    clxcorrelate_fft_vcf.h
+    clXEngine.h DESTINATION include/clenabled
 )

@@ -1,0 +1,131 @@
+id: clenabled_clXEngine
+label: OpenCL X-Engine
+category: '[OpenCL-Accelerated]'
+
+parameters:
+- id: openCLPlatform
+  label: OpenCL Platform Type
+  dtype: enum
+  options: ['1', '2', '3', '4']
+  option_labels: [GPU, Accelerator, CPU, Any]
+  hide: part
+- id: devices
+  label: OpenCL Device
+  dtype: enum
+  options: ['1', '2']
+  option_labels: [Any, Specific]
+  option_attributes:
+      hide_specific: [all, part]
+  hide: part
+- id: platformId
+  label: Platform Id
+  dtype: enum
+  options: ['0', '1', '2', '3']
+  hide: ${ devices.hide_specific }
+- id: deviceId
+  label: Device Id
+  dtype: enum
+  options: ['0', '1', '2', '3']
+  hide: ${ devices.hide_specific }
+- id: type
+  label: Input Type
+  dtype: enum
+  options: [Complex, IChar, Packed XY]
+  option_attributes:
+      data_type: [1, 5, 6]
+      input_format: [complex, char, char]
+  hide: part
+- id: first_channel
+  label: Starting Chanel
+  dtype: int
+  default: '0'
+- id: num_channels
+  label: Channels
+  dtype: int
+  default: '1024'
+- id: num_inputs
+  label: Num Antennas
+  dtype: int
+  default: '2'
+- id: polarization
+  label: Polarizations
+  dtype: enum
+  options: ['1', '2']
+  option_labels: ['Single', 'XY']
+- id: integration
+  label: Integration NTIME
+  dtype: int
+  default: '1024'
+- id: output_file
+  label: Output
+  dtype: enum
+  options: ['False', 'True']
+  option_labels: [Message, File]
+- id: file_base
+  label: File Base Descriptor
+  dtype: string
+  hide: ${ 'part' if output_file=='True' else 'all' }
+- id: rollover_size_mb
+  label: Rollover Size (MB)
+  dtype: int
+  default: '0'
+  hide: ${ 'part' if output_file=='True' else 'all' }
+- id: setDebug
+  label: Debug
+  dtype: enum
+  options: ['False', 'True']
+  option_labels: ['Off', 'On']
+  hide: part
+
+asserts:
+- ${ num_inputs > 1 }
+
+inputs:
+- label: pol1_
+  domain: stream
+  dtype: ${ type.input_format }
+  vlen: ${ (num_channels if type.data_type == 1 else num_channels*2) }
+  multiplicity: ${num_inputs}
+- label: pol2_
+  domain: stream
+  dtype: ${ type.input_format }
+  vlen: ${ (num_channels if type.data_type == 1 else num_channels*2) }
+  multiplicity: ${ (0 if ((polarization == '1') or (type.data_type == 6)) else num_inputs) }
+  optional: ${ (True if ((polarization == '1') or (type.data_type == 6)) else False) }
+  hide: ${ (True if ((polarization == '1') or (type.data_type == 6)) else False) }
+
+outputs:
+- label: xcorr
+  domain: message
+  optional: True
+  hide: ${ output_file }
+
+templates:
+  imports: import clenabled
+  make: |-
+     % if devices == 1:
+     clenabled.clXEngine(${openCLPlatform},1,0,0,${setDebug}, ${type.data_type}, ${polarization}, ${num_inputs}, 1, ${first_channel}, ${num_channels}, ${integration}, ${output_file},${file_base},${rollover_size_mb})
+     % else:
+     clenabled.clXEngine(${openCLPlatform},${devices},${platformId},${deviceId},${setDebug}, ${type.data_type}, ${polarization}, ${num_inputs}, 1, ${first_channel}, ${num_channels}, ${integration}, ${output_file},${file_base},${rollover_size_mb})
+     % endif
+
+documentation: "This block provides the full signal cross correlation function (X) of\
+    \ an FX correlator. The block assumes the input stream is FFT vectors (Complex or signed Char) of\
+    \ the specified channel length, where a channel represents an fft bin.\
+    \ For instance, a 1024 FFT would be considered 1024 channels of width Bandwidth/channels.\
+    \ The output format  is in a format called Triangular\
+    \ Order where element 1 is row/column [0,0], element 2 is [1,0], element 3 is [1,1],\
+    \ element 4 is [2,0] following the lower half of the matrix up to the diagonal in each row.\
+    \ Note that for X/Y polarization, each cell will be xx, xy, yx, yy, so the output stream size\
+    \ will be 4x the size of the single polarization matrix.\
+    \ This approach does save space in memory and for transmission, so it provides an efficient\
+    \ format for those types of activities.  To complete the full matrix, each missing transposed\
+    \ cell is the complex conjugate.  So [0,1] is the complex conjugate of [1,0], etc.\
+    \ For full matrix output, the block completes the 2-dimensional full matrix.\
+    \ \n\nNOTE: If the block is built with OMP support (libomp is installed), the OMP Threads parameter\
+    \ allows the number of threads to be controlled.  0 means max supported processes, but any number\
+    \ less than that could also be specified to not consume the CPU for other blocks."
+
+#  'file_format' specifies the version of the GRC yml format used in the file
+#  and should usually not be changed.
+file_format: 1

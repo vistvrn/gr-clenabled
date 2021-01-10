@@ -15,7 +15,9 @@
 // Disable the deprecated functions warning.  If you want to keep support for 1.2 devices
 // You need to use the deprecated functions.  This #define makes the warning go away.
 // #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#define CL_VERSION_1_2
+// #define CL_VERSION_1_2
+#define CL_VERSION_2_2
+#define CL_TARGET_OPENCL_VERSION 220
 
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl.hpp>
@@ -31,6 +33,9 @@
 #define DTYPE_COMPLEX 1
 #define DTYPE_FLOAT 2
 #define DTYPE_INT 3
+#define DTYPE_SHORT 4
+#define DTYPE_BYTE 5
+#define DTYPE_PACKEDXY 6
 
 #define OCLTYPE_GPU 1
 #define OCLTYPE_ACCELERATOR 2
@@ -74,6 +79,7 @@ protected:
     cl::Program *program=NULL;
     cl::Context *context=NULL;
     std::vector<cl::Device> devices;
+    int devIndex=0;
     cl::Program::Sources *sources=NULL;
     cl::CommandQueue *queue=NULL;
     cl::Kernel *kernel=NULL;

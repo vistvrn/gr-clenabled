@@ -197,15 +197,6 @@ namespace gr {
             CL_MEM_READ_ONLY,
 			(numItems+1) * sizeof(gr_complex));  // complex conj is of index+1.
 
-    	/*
-    	 * Didn't understand set_history.  Don't need to do this.
-    	// Zero out the last entry
-    	float zeroBuff[2];
-    	zeroBuff[0] = zeroBuff[1] = 0.0;
-
-    	queue->enqueueWriteBuffer(*aBuffer,CL_TRUE,numItems*sizeof(gr_complex),sizeof(gr_complex),(void *)&zeroBuff[0]);
-		*/
-
         cBuffer = new cl::Buffer(
             *context,
             CL_MEM_READ_WRITE,
@@ -291,7 +282,7 @@ namespace gr {
     	// Protect context from switching
         gr::thread::scoped_lock guard(d_mutex);
 
-        queue->enqueueWriteBuffer(*aBuffer,CL_TRUE,0,inputSize,input_items[0]);
+        queue->enqueueWriteBuffer(*aBuffer,CL_FALSE,0,inputSize,input_items[0]);
 
 		// Do the work
 

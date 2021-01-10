@@ -878,7 +878,7 @@ namespace gr {
 			CL_MEM_READ_ONLY,
 			d_fir_filter->ntaps()*sizeof(gr_complex));
 
-        queue->enqueueWriteBuffer(*bBuffer,CL_TRUE,0,d_active_taps.size()*sizeof(gr_complex),(void *)(&d_active_taps[0]));
+        queue->enqueueWriteBuffer(*bBuffer,CL_FALSE,0,d_active_taps.size()*sizeof(gr_complex),(void *)(&d_active_taps[0]));
 
 		cBuffer = new cl::Buffer(
 			*context,
@@ -979,11 +979,11 @@ namespace gr {
     	// Zero out the excess buffer
         //int remaining=(curBufferSize+d_fir_filter->ntaps())*dataSize - inputBytes;
 
-        queue->enqueueWriteBuffer(*aBuffer,CL_TRUE,0,inputBytes,(void *)input_items[0]);
+        queue->enqueueWriteBuffer(*aBuffer,CL_FALSE,0,inputBytes,(void *)input_items[0]);
         // calculated in setTimeFilterVariables()
         // 	paddingLength = d_active_taps.size() - 1;
     	//  paddingBytes = dataSize*paddingLength;
-    	queue->enqueueWriteBuffer(*aBuffer,CL_TRUE,inputBytes,paddingBytes,(void *)zeroBuff);
+    	queue->enqueueWriteBuffer(*aBuffer,CL_FALSE,inputBytes,paddingBytes,(void *)zeroBuff);
 
 		kernel->setArg(0, *aBuffer);
 		// bBuffer is prepopulated with the taps so we only have to do the copy when the taps change
@@ -1005,14 +1005,12 @@ namespace gr {
 
 		if (d_decimation == 1) {
 			queue->enqueueReadBuffer(*cBuffer,CL_TRUE,0,inputBytes,(void *)output_items[0]);
-
 			// # in=# out. Do it the quick way
 			// memcpy((void *)output_items[0],output,ninput_items*dataSize);
 			retVal = ninput_items;
 		}
 		else {
 			queue->enqueueReadBuffer(*cBuffer,CL_TRUE,0,inputBytes,(void *)tmpFFTBuff);
-
 			// copy results to output buffer and increment for decimation!
 			int j=0;
 			int i=0;

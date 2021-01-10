@@ -85,14 +85,8 @@ ENDIF()
 ########################################################################
 # Install directories
 ########################################################################
-# find_package(Gnuradio "3.8" REQUIRED)
-find_package(Gnuradio "3.8")
-if(NOT Gnuradio_FOUND)
-    find_package(Gnuradio "3.9")
-	if(NOT Gnuradio_FOUND)
-	    message(FATAL_ERROR "Unable to find GNURadio 3.8 or 3.9")
-	ENDIF(NOT Gnuradio_FOUND)
-ENDIF(NOT Gnuradio_FOUND)
+include(FindPkgConfig)
+find_package(Gnuradio "3.9" REQUIRED)
 include(GrVersion)
 
 include(GrPlatform) #define LIB_SUFFIX
@@ -145,9 +139,34 @@ if(NOT CLFFT_FOUND)
 endif()
 
 ########################################################################
+# Find OpenMP
+########################################################################
+find_package(OpenMP)
+
+########################################################################
+# Setup OpenMP option
+########################################################################
+if(OpenMP_CXX_FOUND)
+    option(ENABLE_OPENMP "Enabling OpenMP boost for X-Engine" ON)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+else(OpenMP_CXX_FOUND)
+    option(ENABLE_OPENMP "OpenMP not found.  Disabling OpenMP boost for X-Engine" OFF)
+endif(OpenMP_CXX_FOUND)
+
+########################################################################
 # Find gnuradio build dependencies
 ########################################################################
 find_package(Doxygen)
+
+########################################################################
+# PyBind11 Related
+########################################################################
+
+find_package(pybind11 REQUIRED)
+execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" -c
+    "try:\n import numpy\n import os\n inc_path = numpy.get_include()\n if os.path.exists(os.path.join(inc_path, 'numpy', 'arrayobject.h')):\n  print(inc_path, end='')\nexcept:\n pass"
+    OUTPUT_VARIABLE PYTHON_NUMPY_INCLUDE_DIR)
 
 ########################################################################
 # Setup doxygen option
@@ -178,9 +197,14 @@ add_subdirectory(include/clenabled)
 add_subdirectory(lib)
 add_subdirectory(apps)
 add_subdirectory(docs)
-add_subdirectory(swig)
-add_subdirectory(python)
-add_subdirectory(grc)
+# NOTE: manually update below to use GRC to generate C++ flowgraphs w/o python
+if(ENABLE_PYTHON)
+  message(STATUS "PYTHON and GRC components are enabled")
+  add_subdirectory(python)
+  add_subdirectory(grc)
+else(ENABLE_PYTHON)
+  message(STATUS "PYTHON and GRC components are disabled")
+endif(ENABLE_PYTHON)
 
 ########################################################################
 # Install cmake search helper for this library

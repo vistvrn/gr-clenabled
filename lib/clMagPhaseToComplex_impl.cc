@@ -270,8 +270,8 @@ namespace gr {
     	// Protect context from switching
         gr::thread::scoped_lock guard(d_mutex);
 
-        queue->enqueueWriteBuffer(*aBuffer,CL_TRUE,0,inputSize,input_items[0]);
-        queue->enqueueWriteBuffer(*bBuffer,CL_TRUE,0,inputSize,input_items[1]);
+        queue->enqueueWriteBuffer(*aBuffer,CL_FALSE,0,inputSize,input_items[0]);
+        queue->enqueueWriteBuffer(*bBuffer,CL_FALSE,0,inputSize,input_items[1]);
 
 		// Do the work
 
@@ -301,7 +301,6 @@ namespace gr {
     // the host
 
 	queue->enqueueReadBuffer(*cBuffer,CL_TRUE,0,noutput_items*sizeof(gr_complex),(void *)output_items[0]);
-
       // Tell runtime system how many output items we produced.
       return noutput_items;
     }
